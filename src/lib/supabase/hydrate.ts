@@ -1,18 +1,17 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
-import { createInitialSeedData } from '@/lib/seed-data';
+import { createEmptyLifeOsData } from '@/lib/seed-data';
 import { formatBytes } from '@/lib/format';
 import type { LifeOsData } from '@/lib/types';
 
 /**
  * Loads real authenticated user records from Supabase PostgreSQL (protected by RLS).
- * If the user's account is brand-new and has zero records yet, returns a clean baseline
- * while preserving profile email/name and real Drive connection metadata.
+ * Brand-new accounts start with a clean empty workspace (zero demo data).
  */
 export async function hydrateLifeOsFromSupabase(
   supabase: SupabaseClient,
   user: User
 ): Promise<{ data: LifeOsData; hasRealRecords: boolean }> {
-  const baseline = createInitialSeedData();
+  const baseline = createEmptyLifeOsData();
 
   const [
     profileRes,
@@ -284,7 +283,7 @@ export async function hydrateLifeOsFromSupabase(
         ? tasksRes.data.map((t) => ({
             id: t.id,
             title: t.title,
-            projectId: t.project_id || baseline.projects[0].id,
+            projectId: t.project_id || baseline.projects[0]?.id || '',
             priority: t.priority,
             status: t.status === 'On Hold' || t.status === 'Cancelled' ? 'To Do' : t.status,
             dueDate: t.due_at ? String(t.due_at).slice(0, 10) : '2026-11-30',

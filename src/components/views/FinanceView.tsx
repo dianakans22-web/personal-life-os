@@ -69,6 +69,16 @@ export function FinanceView() {
   const [assetType, setAssetType] = useState('Perangkat');
   const [assetVal, setAssetVal] = useState('5000000');
 
+  const effectiveTxAccId = data.accounts.some((a) => a.id === txAccId)
+    ? txAccId
+    : (data.accounts[0]?.id ?? '');
+  const effectiveTrFrom = data.accounts.some((a) => a.id === trFrom)
+    ? trFrom
+    : (data.accounts[0]?.id ?? '');
+  const effectiveTrTo = data.accounts.some((a) => a.id === trTo)
+    ? trTo
+    : (data.accounts[1]?.id ?? data.accounts[0]?.id ?? '');
+
   const draftTxs = data.transactions.filter((t) => t.status === 'Draft');
 
   return (
@@ -182,10 +192,11 @@ export function FinanceView() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (!effectiveTxAccId) return;
                 addIncomeExpense({
                   type: txType,
                   amount: Number(txAmount) || 0,
-                  accountId: txAccId,
+                  accountId: effectiveTxAccId,
                   categoryId: txType === 'Income' ? 'cat-inc' : txCatId,
                   merchant: txMerchant || `${txType} Baru`,
                   method: txMethod,
@@ -199,6 +210,11 @@ export function FinanceView() {
               className="rounded-2xl p-5 card-surface space-y-3"
             >
               <h2 className="text-sm font-bold">+ Tambah Pemasukan / Pengeluaran</h2>
+              {data.accounts.length === 0 && (
+                <p className="text-xs text-[var(--status-warn-fg)] bg-[var(--status-warn-bg)] p-2.5 rounded-xl">
+                  Tambahkan minimal 1 akun di tab <strong>Akun &amp; Kekayaan</strong> terlebih dahulu sebelum mencatat transaksi.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <select aria-label="Tipe transaksi" value={txType} onChange={(e) => setTxType(e.target.value as typeof txType)} className="px-3 py-2 rounded-xl text-xs card-canvas">
                   <option value="Expense">Pengeluaran (Expense)</option>
@@ -207,10 +223,14 @@ export function FinanceView() {
                 <input aria-label="Nominal IDR" type="number" min="1" required value={txAmount} onChange={(e) => setTxAmount(e.target.value)} className="px-3 py-2 rounded-xl text-xs card-canvas tabular-nums" placeholder="Nominal IDR" />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <select aria-label="Akun transaksi" value={txAccId} onChange={(e) => setTxAccId(e.target.value)} className="px-3 py-2 rounded-xl text-xs card-canvas">
-                  {data.accounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                <select aria-label="Akun transaksi" value={effectiveTxAccId} onChange={(e) => setTxAccId(e.target.value)} className="px-3 py-2 rounded-xl text-xs card-canvas">
+                  {data.accounts.length === 0 ? (
+                    <option value="">Belum ada akun</option>
+                  ) : (
+                    data.accounts.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))
+                  )}
                 </select>
                 <select aria-label="Kategori transaksi" value={txCatId} onChange={(e) => setTxCatId(e.target.value)} disabled={txType === 'Income'} className="px-3 py-2 rounded-xl text-xs card-canvas">
                   {data.categories.filter((c) => c.type === 'Expense').map((c) => (
@@ -247,7 +267,7 @@ export function FinanceView() {
                 </div>
               )}
               <input aria-label="Catatan transaksi" type="text" value={txNotes} onChange={(e) => setTxNotes(e.target.value)} placeholder="Catatan opsional..." className="w-full px-3 py-2 rounded-xl text-xs card-canvas" />
-              <button type="submit" className="w-full py-2.5 rounded-xl text-xs font-semibold bg-[var(--cta-primary)] text-white">
+              <button type="submit" disabled={data.accounts.length === 0} className="w-full py-2.5 rounded-xl text-xs font-semibold bg-[var(--cta-primary)] text-white">
                 + Posting Transaksi
               </button>
             </form>
@@ -255,7 +275,7 @@ export function FinanceView() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                postTransfer({ fromAccountId: trFrom, toAccountId: trTo, amount: Number(trAmount) || 0, notes: trNotes });
+                postTransfer({ fromAccountId: effectiveTrFrom, toAccountId: effectiveTrTo, amount: Number(trAmount) || 0, notes: trNotes });
               }}
               className="rounded-2xl p-5 card-surface space-y-3"
             >
@@ -266,7 +286,7 @@ export function FinanceView() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label htmlFor="tr-from" className="block text-xs font-semibold mb-1">Dari Akun</label>
-                  <select id="tr-from" value={trFrom} onChange={(e) => setTrFrom(e.target.value)} className="w-full px-3 py-2 rounded-xl text-xs card-canvas">
+                  <select id="tr-from" value={effectiveTrFrom} onChange={(e) => setTrFrom(e.target.value)} className="w-full px-3 py-2 rounded-xl text-xs card-canvas">
                     {data.accounts.map((a) => (
                       <option key={a.id} value={a.id}>{a.name}</option>
                     ))}
@@ -274,7 +294,7 @@ export function FinanceView() {
                 </div>
                 <div>
                   <label htmlFor="tr-to" className="block text-xs font-semibold mb-1">Ke Akun</label>
-                  <select id="tr-to" value={trTo} onChange={(e) => setTrTo(e.target.value)} className="w-full px-3 py-2 rounded-xl text-xs card-canvas">
+                  <select id="tr-to" value={effectiveTrTo} onChange={(e) => setTrTo(e.target.value)} className="w-full px-3 py-2 rounded-xl text-xs card-canvas">
                     {data.accounts.map((a) => (
                       <option key={a.id} value={a.id}>{a.name}</option>
                     ))}

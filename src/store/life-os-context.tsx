@@ -1,12 +1,14 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_WIDGETS,
+  createEmptyLifeOsData,
   createInitialSeedData,
 } from '@/lib/seed-data';
 import { addMinutesToIso, downloadTextFile, formatBytes, formatIDR } from '@/lib/format';
 import {
+  clearAllUserDataAction,
   createEventAction,
   postTransferAction,
   saveDriveDocumentAction,
@@ -67,6 +69,7 @@ export interface DailyProgressStats {
 
 interface LifeOsContextValue {
   data: LifeOsData;
+  isDemoData: boolean;
   supabaseEnabled: boolean;
   googleOAuthConfigured: boolean;
   userEmail: string | null;
@@ -200,11 +203,15 @@ interface LifeOsContextValue {
     access: string;
     customFolderPath?: string;
   }) => DriveFileItem | null;
-  // Data Export & Reset
+  // Data Export, Clear & Reset
   exportJsonBackup: () => void;
   exportTransactionsCsv: () => void;
+  clearAllData: () => void;
   resetDemoData: () => void;
 }
+
+const LOCAL_STORAGE_KEY = 'plos_workspace_data_v1';
+const LOCAL_DEMO_FLAG_KEY = 'plos_workspace_is_demo_v1';
 
 const LifeOsContext = createContext<LifeOsContextValue | null>(null);
 
@@ -226,6 +233,8 @@ export function LifeOsProvider({
   userEmail = null,
 }: ProviderProps) {
   const [data, setData] = useState<LifeOsData>(() => initialData ?? createInitialSeedData());
+  const [isDemoData, setIsDemoData] = useState<boolean>(() => !supabaseEnabled && !initialData);
+  const localHydratedRef = useRef(false);
   const [activeModule, setActiveModule] = useState<ModuleId>(initialModule);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>('light');
@@ -242,6 +251,37 @@ export function LifeOsProvider({
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Restore saved local workspace (if user cleared demo data or entered personal records locally)
+  useEffect(() => {
+    if (supabaseEnabled) return;
+    try {
+      const saved = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+      const savedDemo = window.localStorage.getItem(LOCAL_DEMO_FLAG_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as LifeOsData;
+        if (parsed && parsed.profile && Array.isArray(parsed.events)) {
+          setData(parsed);
+          setIsDemoData(savedDemo === 'true');
+        }
+      }
+    } catch {
+      // Ignore malformed localStorage entries
+    } finally {
+      localHydratedRef.current = true;
+    }
+  }, [supabaseEnabled]);
+
+  // Persist local workspace changes automatically so browser refresh keeps cleared/personal state
+  useEffect(() => {
+    if (supabaseEnabled || !localHydratedRef.current) return;
+    try {
+      window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+      window.localStorage.setItem(LOCAL_DEMO_FLAG_KEY, String(isDemoData));
+    } catch {
+      // Ignore quota errors
+    }
+  }, [data, isDemoData, supabaseEnabled]);
 
   const toast = useCallback((text: string) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
@@ -1705,15 +1745,45 @@ export function LifeOsProvider({
     toast('Ekspor CSV transaksi berhasil diunduh.');
   }, [data.transactions, selectedDate, toast]);
 
-  const resetDemoData = useCallback(() => {
-    setData(createInitialSeedData());
+  const clearAllData = useCallback(() => {
+    const empty = createEmptyLifeOsData();
+    setData(empty);
+    setIsDemoData(false);
     setUiState('populated');
     setSelectedDetail(null);
+    if (!supabaseEnabled) {
+      try {
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(empty));
+        window.localStorage.setItem(LOCAL_DEMO_FLAG_KEY, 'false');
+      } catch {
+        // Ignore storage errors
+      }
+    } else {
+      void clearAllUserDataAction();
+    }
+    toast('Seluruh data berhasil dikosongkan. Workspace Anda kini mulai bersih dari 0.');
+  }, [supabaseEnabled, toast]);
+
+  const resetDemoData = useCallback(() => {
+    const seed = createInitialSeedData();
+    setData(seed);
+    setIsDemoData(true);
+    setUiState('populated');
+    setSelectedDetail(null);
+    if (!supabaseEnabled) {
+      try {
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(seed));
+        window.localStorage.setItem(LOCAL_DEMO_FLAG_KEY, 'true');
+      } catch {
+        // Ignore storage errors
+      }
+    }
     toast('Data simulasi blueprint dikembalikan ke kondisi awal.');
-  }, [toast]);
+  }, [supabaseEnabled, toast]);
 
   const value: LifeOsContextValue = {
     data,
+    isDemoData,
     supabaseEnabled,
     googleOAuthConfigured,
     userEmail,
@@ -1809,6 +1879,7 @@ export function LifeOsProvider({
     attachDriveLink,
     exportJsonBackup,
     exportTransactionsCsv,
+    clearAllData,
     resetDemoData,
   };
 

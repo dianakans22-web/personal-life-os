@@ -25,6 +25,7 @@ export function OverviewView() {
     cycleTaskStatus,
     addQuickNote,
     supabaseEnabled,
+    isDemoData,
   } = useLifeOs();
 
   const [quickNoteInput, setQuickNoteInput] = useState('');
@@ -43,7 +44,11 @@ export function OverviewView() {
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--bg-lime)] text-[var(--ink-on-lime)]">
-                  {supabaseEnabled ? 'Supabase Terhubung' : 'Data Simulasi Blueprint'}
+                  {supabaseEnabled
+                    ? 'Supabase Terhubung'
+                    : isDemoData
+                    ? 'Data Simulasi Blueprint'
+                    : 'Workspace Pribadi (Lokal)'}
                 </span>
                 <span className="text-xs text-[var(--ink-muted)]">
                   {formatDateInTZ(selectedDate, timezone)} · {timezone}

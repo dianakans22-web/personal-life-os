@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { formatDateInTZ } from '@/lib/format';
 import { signOutAction } from '@/lib/actions';
@@ -10,6 +10,7 @@ import type { UiStateMode } from '@/lib/types';
 export function SettingsView() {
   const {
     data,
+    isDemoData,
     supabaseEnabled,
     googleOAuthConfigured,
     userEmail,
@@ -21,15 +22,18 @@ export function SettingsView() {
     setUiState,
     exportJsonBackup,
     exportTransactionsCsv,
+    clearAllData,
     resetDemoData,
   } = useLifeOs();
+
+  const [confirmClear, setConfirmClear] = useState(false);
 
   return (
     <div className="space-y-4">
       <header className="rounded-2xl p-5 card-surface">
         <h1 className="text-lg font-bold">09. Settings, Export &amp; System Audit</h1>
         <p className="text-xs text-[var(--ink-muted)]">
-          Atur zona waktu tampilan lintas modul, tema terang/gelap, ekspor JSON/CSV, serta pantau status koneksi Supabase, Google Drive OAuth &amp; audit log.
+          Atur zona waktu tampilan lintas modul, tema terang/gelap, kosongkan data untuk mulai dari 0, ekspor JSON/CSV, serta pantau status koneksi Supabase &amp; Google Drive OAuth.
         </p>
       </header>
 
@@ -81,8 +85,18 @@ export function SettingsView() {
         </div>
 
         <div className="rounded-2xl p-5 card-surface space-y-4">
-          <h2 className="text-sm font-bold">Koneksi Produksi &amp; Ekspor Data (TC-12)</h2>
+          <h2 className="text-sm font-bold">Koneksi Produksi &amp; Kelola Data (TC-12)</h2>
           <div className="p-3.5 rounded-xl card-canvas space-y-2.5 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold">Mode Data Saat Ini</span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--bg-lime)] text-[var(--ink-on-lime)]">
+                {supabaseEnabled
+                  ? 'Supabase Cloud'
+                  : isDemoData
+                  ? 'Data Simulasi Blueprint'
+                  : 'Workspace Pribadi (Tersimpan Lokal)'}
+              </span>
+            </div>
             <div className="flex items-center justify-between gap-2">
               <span className="font-bold">Database Supabase (PostgreSQL + RLS)</span>
               <span
@@ -110,7 +124,7 @@ export function SettingsView() {
             <p className="text-[11px] text-[var(--ink-muted)]">
               {supabaseEnabled
                 ? `Masuk sebagai ${userEmail || 'Pengguna Terautentikasi'}. Seluruh mutasi & hidrasi berjalan lewat SSR + RLS.`
-                : 'Isi variabel .env.local sesuai .env.example lalu jalankan ./scripts/push-migrations.sh untuk aktivasi penuh.'}
+                : 'Perubahan lokal Anda kini tersimpan otomatis di browser ini. Hubungkan Supabase agar data sinkron antara Laptop & HP.'}
             </p>
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <Link
@@ -149,27 +163,75 @@ export function SettingsView() {
             </button>
             <button
               type="button"
-              onClick={resetDemoData}
+              onClick={() => {
+                setConfirmClear(false);
+                resetDemoData();
+              }}
               className="px-3.5 py-2 rounded-xl text-xs font-semibold card-canvas hover:bg-[var(--bg-hover)]"
             >
-              Reset Data Simulasi
+              Reset ke Data Simulasi
             </button>
+          </div>
+
+          {/* Clear All Data (Start From 0) with 2-step safety confirmation */}
+          <div className="p-3.5 rounded-xl border border-[var(--status-danger-fg)]/40 bg-[var(--status-danger-bg)] space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold text-[var(--status-danger-fg)]">Kosongkan Semua Data (Mulai dari 0)</p>
+                <p className="text-[11px] text-[var(--status-danger-fg)]/90">
+                  Menghapus seluruh data contoh / data saat ini agar Anda bisa mengisi data pribadi dari awal.
+                </p>
+              </div>
+              {!confirmClear ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmClear(true)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[var(--status-danger-fg)] text-white shrink-0"
+                >
+                  Kosongkan Semua Data
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearAllData();
+                      setConfirmClear(false);
+                    }}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-[var(--status-danger-fg)] text-white"
+                  >
+                    Ya, Hapus Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClear(false)}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold card-canvas text-[var(--ink-primary)]"
+                  >
+                    Batal
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl p-5 card-surface space-y-2.5">
         <h2 className="text-sm font-bold">Audit Log Aktivitas Sistem ({data.auditLogs.length})</h2>
-        <div className="space-y-1.5">
-          {data.auditLogs.slice(0, 12).map((log) => (
-            <div key={log.id} className="p-2.5 rounded-xl card-canvas text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <span>
-                <strong className="text-[var(--link-accent)]">[{log.entity}]</strong> {log.action}
-              </span>
-              <span className="text-[11px] text-[var(--ink-muted)]">{formatDateInTZ(log.time, timezone)}</span>
-            </div>
-          ))}
-        </div>
+        {data.auditLogs.length === 0 ? (
+          <p className="text-xs text-[var(--ink-muted)]">Belum ada aktivitas tercatat.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {data.auditLogs.slice(0, 12).map((log) => (
+              <div key={log.id} className="p-2.5 rounded-xl card-canvas text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span>
+                  <strong className="text-[var(--link-accent)]">[{log.entity}]</strong> {log.action}
+                </span>
+                <span className="text-[11px] text-[var(--ink-muted)]">{formatDateInTZ(log.time, timezone)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

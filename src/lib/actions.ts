@@ -422,6 +422,38 @@ export async function saveDriveDocumentAction(input: z.infer<typeof DriveDocSche
   return { ok: true, mode: 'supabase', data };
 }
 
+export async function clearAllUserDataAction(): Promise<ActionResult> {
+  const { supabase, user } = await getAuthenticatedUser();
+  if (!supabase || !user) return { ok: true, mode: 'local' };
+
+  const tables = [
+    'drive_sync_logs',
+    'drive_documents',
+    'drive_folders',
+    'journal_entries',
+    'quick_notes',
+    'tasks',
+    'events',
+    'ibadah_logs',
+    'exercise_logs',
+    'sleep_logs',
+    'daily_reflections',
+    'habits',
+    'debts',
+    'assets',
+    'savings_goals',
+    'budgets',
+    'projects',
+  ];
+
+  for (const table of tables) {
+    await supabase.from(table).delete().eq('user_id', user.id);
+  }
+
+  revalidatePath('/');
+  return { ok: true, mode: 'supabase' };
+}
+
 export async function signOutAction(): Promise<void> {
   const supabase = await createServerSupabase();
   if (supabase) {

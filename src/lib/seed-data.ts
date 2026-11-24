@@ -250,3 +250,72 @@ export function createInitialSeedData(): LifeOsData {
     ],
   };
 }
+
+export function createEmptyLifeOsData(): LifeOsData {
+  return {
+    profile: {
+      displayName: 'Pengguna Personal',
+      roleLabel: 'Pemilik Akun Tunggal',
+      city: 'Indonesia',
+      workStart: '07:00',
+      workEnd: '21:00',
+      baseCurrency: 'IDR',
+    },
+    notifications: [],
+    events: [],
+    habits: [],
+    ibadahLogs: [],
+    sleepLogs: [],
+    exerciseLogs: [],
+    reflections: [],
+    accounts: [],
+    categories: [
+      { id: 'cat-food', name: 'Kebutuhan Harian > Makan & Minum', type: 'Expense' },
+      { id: 'cat-trans', name: 'Transportasi > Bensin & Tol', type: 'Expense' },
+      { id: 'cat-edu', name: 'Pendidikan > Biaya Penelitian & Buku', type: 'Expense' },
+      { id: 'cat-travel', name: 'Perjalanan > Tiket, Hotel & Konsumsi', type: 'Expense' },
+      { id: 'cat-home', name: 'Tempat Tinggal > Listrik & Internet', type: 'Expense' },
+      { id: 'cat-inc', name: 'Pemasukan > Gaji & Proyek', type: 'Income' },
+    ],
+    transactions: [],
+    budgets: [],
+    savingsGoals: [],
+    debts: [],
+    assets: [],
+    trips: [],
+    academic: {
+      thesis: {
+        projectId: '',
+        title: 'Belum ada judul tesis / riset',
+        institution: '-',
+        supervisor: '-',
+        targetDate: '',
+        sections: [],
+        milestones: [],
+      },
+      papers: [],
+      supervisionLogs: [],
+      researchLogs: [],
+      references: [],
+      docVersions: [],
+    },
+    projects: [],
+    tasks: [],
+    quickNotes: [],
+    journalEntries: [],
+    memories: [],
+    drive: {
+      connected: false,
+      accountEmail: 'Belum terhubung',
+      rootFolder: '/Personal Life OS',
+      rootFolderUrl: '',
+      autoCreateFolder: true,
+      folderPattern: 'module_year_object',
+      folders: [],
+      files: [],
+      syncLogs: [],
+    },
+    auditLogs: [],
+  };
+}
+

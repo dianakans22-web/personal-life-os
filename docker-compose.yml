@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Optional ephemeral Postgres 16 container for SQL migration & RLS testing:
+  # docker compose --profile test up -d db_test
+  db_test:
+    image: postgres:16-alpine
+    profiles: ["test"]
+    ports:
+      - "127.0.0.1:54329:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: plos_dev_password
+      POSTGRES_DB: personal_life_os
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d personal_life_os"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

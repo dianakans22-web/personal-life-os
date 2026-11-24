@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* Botanical Teal-Lime Design Tokens scoped to .plos-shell */
+.plos-shell {
+  --bg-canvas: #ffffff;
+  --bg-subtle: #f4f7f6;
+  --bg-hover: #eaf1ef;
+  --bg-panel-deep: #0a4d52;
+  --bg-panel-deep-soft: #115e64;
+  --bg-lime: #ddf296;
+  --bg-mint: #5cc489;
+  --bg-teal: #0a4d52;
+  --ink-primary: #132a2e;
+  --ink-muted: #4a5f63;
+  --ink-on-lime: #0e3336;
+  --ink-on-mint: #082e20;
+  --ink-on-deep: #ffffff;
+  --ink-on-deep-muted: #b7e4dd;
+  --border-hairline: #dce6e4;
+  --border-strong: #b4c8c4;
+  --cta-primary: #146e5a;
+  --cta-primary-hover: #0e5747;
+  --link-accent: #0f5c4a;
+  --ring-accent: #0a4d52;
+  --focus-ring: #0e7c66;
+  --status-success-bg: #e5f6ee;
+  --status-success-fg: #0f5c3a;
+  --status-warn-bg: #fef4dc;
+  --status-warn-fg: #8a4f00;
+  --status-danger-bg: #feeceb;
+  --status-danger-fg: #a61b1b;
+  --shadow-elevated: 0 12px 28px -12px rgba(10, 77, 82, 0.22);
+  color: var(--ink-primary);
+  background-color: var(--bg-canvas);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.plos-shell[data-theme="dark"] {
+  --bg-canvas: #0e181a;
+  --bg-subtle: #142326;
+  --bg-hover: #1c3135;
+  --bg-panel-deep: #073337;
+  --bg-panel-deep-soft: #0e454a;
+  --bg-lime: #ddf296;
+  --bg-mint: #5cc489;
+  --bg-teal: #0f5c62;
+  --ink-primary: #eaf2f1;
+  --ink-muted: #9bb3b6;
+  --ink-on-lime: #0e3336;
+  --ink-on-mint: #082e20;
+  --ink-on-deep: #ffffff;
+  --ink-on-deep-muted: #b7e4dd;
+  --border-hairline: #233a3f;
+  --border-strong: #395b62;
+  --cta-primary: #146e5a;
+  --cta-primary-hover: #1b876f;
+  --link-accent: #6ce0bd;
+  --ring-accent: #5cc489;
+  --focus-ring: #7ee5c8;
+  --status-success-bg: #113829;
+  --status-success-fg: #8ce2b7;
+  --status-warn-bg: #3c2b0c;
+  --status-warn-fg: #f7ca74;
+  --status-danger-bg: #3d1618;
+  --status-danger-fg: #f9a6a6;
+  --shadow-elevated: 0 14px 32px -12px rgba(0, 0, 0, 0.55);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+@layer base {
+  button,
+  a[href],
+  select,
+  summary,
+  input[type="checkbox"],
+  input[type="radio"],
+  label[for],
+  [role="tab"],
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron-pill {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+}
+
+.card-surface {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+}
+
+.card-canvas {
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-hairline);
+}
+
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
